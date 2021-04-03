@@ -1,0 +1,258 @@
+esphome:
+  name: honeywell_fan
+  platform: ESP8266
+  board: d1_mini
+
+<<: !include ./secrets.yaml
+
+api:
+
+captive_portal:
+
+logger:
+
+globals:
+   - id: fan_onoff_state
+     type: int
+     restore_value: no
+     initial_value: '0'
+   - id: in_f_s_s
+     type: int
+     restore_value: no
+     initial_value: '0'
+   - id: fan_osc_status
+     type: int
+     restore_value: no
+     initial_value: '0'
+
+
+fan:
+  - platform: speed
+    output: honeywell_fan
+    name: "Honeywell Smart Fan"
+    oscillation_output: osc_toggle
+    speed_count: 4
+    
+# output pins defined
+output:
+  - platform: gpio # oscillate pin
+    pin: D6
+    id: gpio_osc
+  - platform: gpio  #speed toggle pin
+    pin: D5
+    id: gpio_speed
+  - platform: gpio  #on/off pin
+    pin: D2
+    id: gpio_onoff
+  
+  # use templates to catch the fan values provided, so we can momentary switches
+  - platform: template
+    id: osc_toggle
+    type: binary
+    write_action:
+      - if:
+          condition:
+            lambda: return ((state == true));
+          then:
+            - lambda: |-
+                    if(id(fan_osc_status)==0){
+                    id(gpio_osc).turn_on();
+                    delay(75);
+                    id(gpio_osc).turn_off();
+                    }
+                    id(fan_osc_status)=1;
+                    
+      - if:
+          condition:
+            lambda: return ((state == false));
+          then:
+            - lambda: |-
+                    if(id(fan_osc_status)==1){
+                    id(gpio_osc).turn_on();
+                    delay(75);
+                    id(gpio_osc).turn_off();
+                    }
+                    id(fan_osc_status)=0;
+
+  - platform: template
+    id: honeywell_fan
+    type: float
+    write_action:
+      - if: #fan speed state 0, aka off
+          condition:
+            lambda: return ((state == 0));
+          then:
+            - lambda: |-
+                    if(id(fan_onoff_state)==0){
+                      // do nothing were off
+                    } else {
+                      id(gpio_onoff).turn_on();
+                      delay(75);
+                      id(gpio_onoff).turn_off();
+                    }
+                    id(fan_onoff_state)=0;
+                    id(in_f_s_s) =4; //reset fan to 4 as thats what it will be when it comes back on!
+      - if: # fan speed state 1
+          condition:
+            lambda: return ((state > 0) && (state < .26));
+          then:
+            - lambda: |-
+                    if(id(fan_onoff_state)==0){
+                      // were off must turn on
+                      id(gpio_onoff).turn_on();
+                      delay(75);
+                      id(gpio_onoff).turn_off();
+                    }
+                    if(id(in_f_s_s)==1) {
+                      // do nothing this is state 1
+                    }else if(id(in_f_s_s)==2) {
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //3
+                      delay(75);
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //4
+                      delay(75);
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //1
+                    }else if(id(in_f_s_s)==3){
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //4
+                      delay(75);
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //1
+                    }else if(id(in_f_s_s)==4){
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //1
+                    }
+                    id(in_f_s_s) =1;
+                    id(fan_onoff_state) =1;
+
+      - if: # fan speed state 2
+          condition:
+            lambda: return ((state > .26) && (state < .51));
+          then:
+            - lambda: |-
+                    if(id(fan_onoff_state)==0){
+                      // were off must turn on
+                      id(gpio_onoff).turn_on();
+                      delay(75);
+                      id(gpio_onoff).turn_off();
+                    }
+                    if(id(in_f_s_s)==1) {
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //2
+                    }else if(id(in_f_s_s)==2) {
+                      // do nothing
+                    }else if(id(in_f_s_s)==3){
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //4
+                      delay(75);
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //1
+                      delay(75);
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //2
+                    }else if(id(in_f_s_s)==4){
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //1
+                      delay(75);
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //2
+                    }
+                    id(in_f_s_s) =2;
+                    id(fan_onoff_state) =1;
+      - if: # fan speed state 3
+          condition:
+            lambda: return ((state > .51) && (state < .76));
+          then:
+            - lambda: |-
+                    if(id(fan_onoff_state)==0){
+                      // were off must turn on
+                      id(gpio_onoff).turn_on();
+                      delay(75);
+                      id(gpio_onoff).turn_off();
+                    }
+                    if(id(in_f_s_s)==1) {
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //2
+                      delay(75);
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //3
+                    }else if(id(in_f_s_s)==2){
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //3
+                    }else if(id(in_f_s_s)==4){
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //1
+                      delay(75);
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //2
+                      delay(75);
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //3
+                    }
+                    id(in_f_s_s) =3;
+                    id(fan_onoff_state) =1;        
+      - if: # speed state 4
+          condition:
+            lambda: return ((state == 1));
+          then:
+            - lambda: |-
+                    if(id(fan_onoff_state)==0){
+                      // were off must turn on
+                      id(gpio_onoff).turn_on();
+                      delay(75);
+                      id(gpio_onoff).turn_off();
+                    }
+                    if(id(in_f_s_s)==1){
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off();//2
+                      delay(75);
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off();//3
+                      delay(75);
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off();//4
+                    }else if(id(in_f_s_s)==2){
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off();//3
+                      delay(75);
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off();//4
+                    }else if(id(in_f_s_s)==3){
+                      id(gpio_speed).turn_on();
+                      delay(75);
+                      id(gpio_speed).turn_off(); //4
+                    }else if(id(in_f_s_s)==4){
+                    // do nothing
+                    }
+                    id(in_f_s_s) =4;
+                    id(fan_onoff_state) =1;
+sensor:
+  - platform: wifi_signal
+    name: "honeywell_fan_wifi"
+    update_interval: 15s
+    id: honeywell_fan_wifi
