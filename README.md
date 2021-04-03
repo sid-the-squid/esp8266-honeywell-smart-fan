@@ -11,13 +11,17 @@ In addition to the fan, you’ll also need.
 3x mosfet pwm modules, I used these https://www.amazon.co.uk/gp/product/B07VRCXGFY/ref=ppx_yo_dt_b_asin_title_o07_s00?ie=UTF8&psc=1
 2x 3 wire connectors, just to make life easier assembling the fan, I used these https://www.amazon.co.uk/gp/product/B01DF0UL8C/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1
 A few wires, and a soldering iron.
+
 Optionally a hot glue gun, not strictly required but I find very useful for these kinds of projects.
 I of course used a multimeter too to determine pins and voltage, but I’ve done the hard work for you, see the picture of everywhere you need to solder!
 
 Fantastically enough the internal circuit board in the Honeywell fan run at 5V DC, and supplies that power even when the fan is ‘off’, what a happy coincidence :)
 So basically, what we’re doing with this code is simulating button presses on the fan control. As each button basically is just a momentary switch to ground, we’ll do this by momentarily grounding the appropriate point on the circuit board using our MOSFTET PWM modules, thus simulating a button press. I found that 75ms was the quickest grounding time I could get away with, at 50ms the fan wouldn’t register a button press!
+
 We’ll use a couple of variables internally to keep track of our fan speed, power on status, and oscillation status, this is required as we’re always toggling, and to change fan speed say from 2 to 4 it would require simulating 2 button presses, but don’t worry too much about this its all taken care of in the yaml :)
+
 I took this approach as its pretty straight forward electronics and coding, the limitation being if the physical buttons on the fan are pressed the smart side of things doesn’t know about it, and things can get out of sync, re-syncing would involve physical pressing the fan off button, then changing the speed in HA, this would set everything back, this is a limitation I’m perfectly ok with, as once its smart I can’t imagine I’d ever use the physical buttons again.
+
 Now it may be possible to design this smarter so physical button presses on the fan can be understood by the ESP device, I suspect this could be done by understanding the logic chip better, however it looked like too much faff and the logic chip is all 5V where as our ESP devices are 3.3V (on the GPIO pins) I didn’t bother digging this far.
 
 ESP wise I used GND, 5V, D6 for oscillate button, D5 for speed button, and D2 for power on/off button, should however work with any pins you want, just remember to update the yaml appropriately.
@@ -27,6 +31,7 @@ apologies for some of the unconventional wire colour used, I've labled up the pi
 Software wise we’re going to use the fantastic ESPHome project https://esphome.io/
 
 To correctly support 4 speeds on a fan you will need at least the following versions
+
 Home assistant: version 2021.4.0b3
 EspHome: 1.17.0b1
 Yes, that’s right both are in BETA at time of writing, this is cutting edge stuff ;)
