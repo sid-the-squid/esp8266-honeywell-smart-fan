@@ -55,24 +55,27 @@ output:
             lambda: return ((state == true));
           then:
             - lambda: |-
-                    if(id(fan_osc_status)==0){
+                    if(id(fan_osc_status)==0 & id(fan_onoff_state)==1){
                     id(gpio_osc).turn_on();
-                    delay(75);
+                    delay(100);
                     id(gpio_osc).turn_off();
-                    }
                     id(fan_osc_status)=1;
+                    }
+                    
                     
       - if:
           condition:
             lambda: return ((state == false));
           then:
             - lambda: |-
-                    if(id(fan_osc_status)==1){
+                    if(id(fan_osc_status)==1 & id(fan_onoff_state)==1){
                     id(gpio_osc).turn_on();
-                    delay(75);
+                    delay(100);
                     id(gpio_osc).turn_off();
-                    }
                     id(fan_osc_status)=0;
+                    }
+
+
 
   - platform: template
     id: honeywell_fan
@@ -92,6 +95,7 @@ output:
                     }
                     id(fan_onoff_state)=0;
                     id(in_f_s_s) =4; //reset fan to 4 as thats what it will be when it comes back on!
+                    id(fan_osc_status)=0;
       - if: # fan speed state 1
           condition:
             lambda: return ((state > 0) && (state < .26));
