@@ -43,7 +43,7 @@ Now it may be possible to design this smarter so physical button presses on the 
 To correctly support 4 speeds on a fan you will need at least the following versions
 
 * Home assistant: version 2021.4.0b3
-*EspHome: 1.17.0b1
+* EspHome: 1.17.0b1
 
 Yes, that’s right both are in BETA at time of writing, this is cutting edge stuff ;)
 
